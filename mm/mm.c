@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <assert.h>
 
-#include "mm_trace.h"
+#include "mm.h"
 #include "klist.h"
 
 typedef struct mm_info_s{
