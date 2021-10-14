@@ -39,6 +39,22 @@ struct task_s {
 pthread_mutex_t task_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LIST_HEAD(task_list);
 
+void time2str(char *buf,int size)
+{
+    assert(buf && size > 0);
+    struct timeval tv;
+    struct tm tm;
+    int pos = 0;
+    long millisecond = 0;
+    bzero(buf,size);
+    gettimeofday(&tv,NULL);
+    localtime_r(&tv.tv_sec,&tm);
+    //格式化化为字符串输出.
+    strftime(buf,size,"%F %T",&tm);
+    pos = strlen(buf);
+    millisecond = tv.tv_usec / 1000;
+    snprintf(buf+pos,size-pos,".%lu",millisecond);
+}
 
 static void *__task_routine(void *arg)
 {
@@ -48,9 +64,9 @@ static void *__task_routine(void *arg)
 	task->node.info.tid = (unsigned long)pthread_self();
 	task->node.info.pid = (unsigned long)gettid();
 	prctl(PR_SET_NAME,task->node.info.name);
-	
 	if(task->node.info.func) 
 		task->node.info.func(task->node.info.arg);
+	sem_post(&task->sem);
 	return NULL;
 }
 
@@ -93,6 +109,8 @@ void task_destroy(task_t *task)
 	
 	if(task)
 	{
+		printf("task_destroy: %s(%u : %u)\n",task->node.info.name,
+		task->node.info.pid,task->node.info.tid);
 		task->exit = 1;
 		/* waiting task exit */
 		sem_wait(&task->sem);
@@ -134,24 +152,23 @@ void task_mm_add(unsigned long tid,task_mm_node_t *mnode)
 void task_mm_del(unsigned long tid,void *addr)
 {
 	task_t *node = NULL,*tmp = NULL;
+	pthread_mutex_lock(&task_mutex);
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
 		if(tid == node->node.info.tid)
 		{
+			task_mm_node_t *mnode = NULL,*tmnode = NULL;
+			list_for_each_entry_safe(mnode, tmnode,&node->node.list, list) {
+				if(addr == mnode->addr)
+				{
+					list_del(&mnode->list);
+					free(mnode);
+					break;
+				}
+			}
 			break;
 		}
 	}
-	task_mm_node_t *mnode = NULL,*tmnode = NULL;
-	if(node)
-	{
-		list_for_each_entry_safe(mnode, tmnode,&node->node.list, list) {
-			if(addr == mnode->addr)
-			{
-				list_del(&mnode->list);
-				free(mnode);
-				break;
-			}
-		}
-	}
+	pthread_mutex_unlock(&task_mutex);
 }
 
 
@@ -162,6 +179,7 @@ void task_mm_show(void)
 	char cmd[1024] = {0,};
 	FILE *fp = NULL;
     char buf[1024] = {0,};
+    char time[64] = {0,};
     char *pResult = NULL;
     unsigned long task_pid = 0,task_tid = 0;
 	int i = 0;
@@ -178,8 +196,8 @@ void task_mm_show(void)
     fclose(fp);
     fp = NULL;
     //printf("%s\n",buf);
-    
-	printf("\n\n=========================================== task_mm_show ===========================================\n");
+    time2str(time,sizeof(time));
+	printf("\n\n=========================================== task_mm_show [%s] ===========================================\n",time);
 	printf("%-20s %-20s %-20s %-20s\n","[task]","[task_pid]","[task_tid]","[size]");
 	
     char *sub = NULL,*str = NULL;
@@ -207,7 +225,7 @@ void task_mm_show(void)
 				}
 			}
 		}
-		printf("%-20s %-20u %-20x %-20u\n",task_name,task_pid,task_tid,mem_size);
+		printf("%-20s %-20u %-20u %-20u\n",task_name,task_pid,task_tid,mem_size);
 	} while(1);
 	
 }

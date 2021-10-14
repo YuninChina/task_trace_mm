@@ -8,47 +8,72 @@
 #include <sys/prctl.h>
 
 #include "mm.h"
+#include "task.h"
 
 
 static void *task_routine_no1(void *arg)
 {
-	prctl(PR_SET_NAME,"task_no1");
 	int cnt = 0;
 	void *p = NULL;
-	printf("[task_routine_no1] PID=%u (%u) , TID=%u\n",getpid(),gettid(),pthread_self());
 	while (1)
 	{
 		p = MALLOC((cnt+1)*16);
 		sleep(1);
 		cnt++;
-		if(0 == cnt%3)
-		{
-			FREE(p);
-		}
+		if(cnt > 5)
+			break;
 	}
 	return NULL;
 }
 
 static void *task_routine_no2(void *arg)
 {
-	prctl(PR_SET_NAME,"task_no2");
 	int cnt = 0;
 	void *p = NULL;
-	printf("[task_routine_no2] PID=%u (%u) , TID=%u\n",getpid(),gettid(),pthread_self());
 	while (1)
 	{
 		p = MALLOC((cnt+1)*512);
 		sleep(1);
 		cnt++;
-		if(0 == cnt%2)
-		{
-			FREE(p);
-		}
+		if(cnt > 10)
+			break;
 	}
 	return NULL;
 }
 
 
+static void *task_routine_normal(void *arg)
+{
+	int cnt = 0;
+	void *p = NULL;
+	while (1)
+	{
+		p = MALLOC((cnt+1)*2048);
+		cnt++;
+		FREE(p);
+		sleep(1);
+		if(cnt > 15)
+			break;
+	}
+	return NULL;
+}
+
+
+static void *task_routine_dummy(void *arg)
+{
+	int cnt = 0;
+	void *p = NULL;
+	while (1)
+	{
+		p = MALLOC((cnt+1)*64);
+		cnt++;
+		sleep(1);
+		if(cnt > 20)
+			break;
+	}
+	
+	return NULL;
+}
 
 
 int main(void)
@@ -63,51 +88,52 @@ int main(void)
 	assert(p1);
 
 	
-	pthread_t thread_id1,thread_id2;
-	int ret = -1;
+	task_t *t1 = NULL,*t2 = NULL,*t3 = NULL,*t4 = NULL;
 	
-	ret = pthread_create(&thread_id1, NULL, task_routine_no1, (void *)NULL);
-	assert(0 == ret);
-	pthread_detach(thread_id1);
+	t1 = task_create("no1",0,0, task_routine_no1, (void *)NULL);
+	if(NULL == t1) goto exit_t1;
+	t2 = task_create("no2",0,0, task_routine_no2, (void *)NULL);
+	if(NULL == t2) goto exit_t2;
+	t3 = task_create("normal",0,0, task_routine_normal, (void *)NULL);
+	if(NULL == t3) goto exit_t3;
+	t4 = task_create("dummy",0,0, task_routine_dummy, (void *)NULL);
+	if(NULL == t4) goto exit_t4;
 	
-	ret = pthread_create(&thread_id2, NULL, task_routine_no2, (void *)NULL);
-	assert(0 == ret);
-	pthread_detach(thread_id2);
-
-	printf("PID=%u (%u) , TID=%u\n",getpid(),gettid(),pthread_self());
-		
 	while(1)
 	{
-		mm_show();
-		sleep(1);
 		system("clear");
-		if(cnt > 5)
+		task_mm_show();
+		sleep(1);
+
+		if(cnt == 3*1)
 		{
-			if(p3) 
-			{
-				FREE(p3);
-				p3 = NULL;
-			}
-		}	
-		if(cnt > 5*2)
+			if(p1) {FREE(p1); p1=NULL;}
+		}
+		if(cnt == 3*2)
 		{
-			if(p2) 
-			{
-				FREE(p2);
-				p2 = NULL;
-			}
-		}		
-		if(cnt > 5*3)
+			if(p2) {FREE(p2); p2=NULL;}
+		}
+		if(cnt == 3*3)
 		{
-			if(p1) 
-			{
-				FREE(p1);
-				p1 = NULL;
-			}
+			if(p3) {FREE(p3); p3=NULL;}
 		}
 		cnt++;
+		if(cnt > 30)
+			break;
 	}
 	
+	task_destroy(t4);
+	
+exit_t4:
+	task_destroy(t3);
+	
+exit_t3:
+	task_destroy(t2);
+	
+exit_t2:
+	task_destroy(t1);
+exit_t1:
+
 	return 0;
 }
 
