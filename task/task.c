@@ -5,6 +5,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <assert.h>
+#include <sys/prctl.h>
+#include <semaphore.h>
 
 #include "task.h"
 #include "klist.h"
@@ -63,7 +65,7 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 	task->node.info.func = func;
 	task->node.info.arg = arg;
 	task->exit = 1;
-	sem_init(&task->sem);
+	sem_init(&task->sem,0,0);
 	
 	INIT_LIST_HEAD(&task->node.list);
 	pthread_mutex_init(&task->node.mutex, NULL);
@@ -73,8 +75,9 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 	
 	if(pthread_create(&thread_id, NULL, __task_routine, (void *)task) != 0)
 	{
-		ASSERT(0);
-		return -1;
+		assert(0);
+		free(task);
+		return NULL;
 	}
 	task->exit = 0;
 	return task;
@@ -124,6 +127,29 @@ void task_mm_add(unsigned long tid,task_mm_node_t *mnode)
 	}
 }
 
+
+void task_mm_del(unsigned long tid,void *addr)
+{
+	task_t *node = NULL,*tmp = NULL;
+	list_for_each_entry_safe(node, tmp,&task_list, list) {
+		if(tid == node->node.info.tid)
+		{
+			break;
+		}
+	}
+	task_mm_node_t *mnode = NULL,*tmnode = NULL;
+	if(node)
+	{
+		list_for_each_entry_safe(mnode, tmnode,&node->node.list, list) {
+			if(addr == mnode->addr)
+			{
+				list_del(&mnode->list);
+				free(mnode);
+				break;
+			}
+		}
+	}
+}
 
 
 

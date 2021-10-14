@@ -20,6 +20,7 @@ typedef struct task_mm_node_s{
 task_t *task_create(const char *name,unsigned long stack_size,int priority,task_func_t func,void *arg);
 void task_destroy(task_t *task);
 void task_mm_add(unsigned long tid,task_mm_node_t *mnode);
+void task_mm_del(unsigned long tid,void *addr);
 
 
 #endif

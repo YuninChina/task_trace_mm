@@ -7,48 +7,25 @@
 #include <assert.h>
 
 #include "mm.h"
-#include "klist.h"
-
-typedef struct mm_info_s{
-	char task_name[32];
-	unsigned long pid;  //process ID
-	unsigned long tid;  //thread ID
-	const char *func;
-	unsigned long line;
-	unsigned long size;
-	void *addr;
-}mm_info_t;
-
-typedef struct mm_node_s{
-	struct list_head list;
-	mm_info_t info;
-}mm_node_t;
-
-pthread_mutex_t mm_mutex = PTHREAD_MUTEX_INITIALIZER;
-static LIST_HEAD(mm_list);
+#include "task.h"
 
 
 void *mm_malloc(const char *func,unsigned long line,unsigned long size)
 {
 	void *addr = NULL;
-	mm_node_t *node = NULL;
-	pthread_t thread_id = 0;
+	task_mm_node_t *node = NULL;
 	addr = malloc(size);
 	assert(addr);
 	node = malloc(sizeof(*node));
 	assert(node);
-	thread_id = pthread_self();
-	pthread_getname_np(thread_id,node->info.task_name,sizeof(node->info.task_name));
-	node->info.tid = (unsigned long)thread_id;
-	node->info.pid = (unsigned long)gettid();
-	node->info.func = func;
-	node->info.line = line;
-	node->info.size = size;
-	node->info.addr = addr;
+	node->tid = (unsigned long)pthread_self();
+	node->pid = (unsigned long)gettid();
+	node->func = func;
+	node->line = line;
+	node->size = size;
+	node->addr = addr;
 
-	pthread_mutex_lock(&mm_mutex);
-	list_add_tail(&node->list, &mm_list);
-	pthread_mutex_unlock(&mm_mutex);
+	task_mm_add(node->tid,node);
 	
 	return addr;
 }
@@ -56,17 +33,11 @@ void *mm_malloc(const char *func,unsigned long line,unsigned long size)
 
 void mm_free(void *addr)
 {
-	mm_node_t *node = NULL,*tmp = NULL;
+	unsigned long tid;  //thread ID
 	if(addr)
 	{
-		list_for_each_entry_safe(node, tmp,&mm_list, list) {
-			if(node->info.addr == addr)
-			{
-				list_del(&node->list);
-				free(node);
-				break;
-			}
-		}
+		tid = (unsigned long)pthread_self();
+		task_mm_del(tid,addr);
 		free(addr);
 		addr = NULL;
 	}
@@ -94,6 +65,7 @@ const char *task_name_get(unsigned long ppid,unsigned long pid,char *buf,unsigne
     return buf;
 }
 
+#if 0
 void mm_show(void)
 {
 	mm_node_t *node = NULL,*tmp = NULL;
@@ -206,4 +178,6 @@ void task_mm_show(void)
 	} while(1);
 	
 }
+
+#endif
 
