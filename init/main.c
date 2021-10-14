@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <assert.h>
 
-#include "mm_trace.h"
+#include "mm.h"
 
 int main(void)
 {

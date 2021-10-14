@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <sys/prctl.h>
 
-#include "mm_trace.h"
+#include "mm.h"
 
 
 static void *task_routine_no1(void *arg)
