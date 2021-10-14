@@ -152,16 +152,61 @@ void task_mm_del(unsigned long tid,void *addr)
 }
 
 
+void task_mm_show(void)
+{
+	task_t *node = NULL,*tmp = NULL;
 
+	char cmd[1024] = {0,};
+	FILE *fp = NULL;
+    char buf[1024] = {0,};
+    char *pResult = NULL;
+    unsigned long task_pid = 0,task_tid = 0;
+	int i = 0;
+	unsigned long mem_size = 0;
+	const char *task_name = NULL;
+	pid_t pid = getpid();
+	memset(cmd,0,sizeof(cmd));
+    snprintf(cmd,sizeof(cmd),"ls /proc/%d/task/ | xargs",pid);
+    fp = popen (cmd, "r");
+    assert(fp);
+	memset(buf,0,sizeof(buf));
+	pResult = fgets (buf, sizeof (buf), fp);
+    assert(pResult);
+    fclose(fp);
+    fp = NULL;
+    //printf("%s\n",buf);
+    
+	printf("\n\n=========================================== task_mm_show ===========================================\n");
+	printf("%-20s %-20s %-20s %-20s\n","[task]","[task_pid]","[task_tid]","[size]");
+	
+    char *sub = NULL,*str = NULL;
+	str = buf;
+	do {
+		sub = strtok(str," ");
+		if(NULL == sub)
+			break;
+		sscanf(str,"%u",&task_pid);
+		//printf("pid=%d, task_pid: %d\n",pid,task_pid);
+		str += (strlen(sub)+1);
 
-
-
-
-
-
-
-
-
-
+		///////////////////////////////
+		mem_size = 0;
+		task_name = NULL;
+		list_for_each_entry_safe(node, tmp,&task_list, list) {
+			if(task_pid == node->node.info.pid)
+			{
+				task_name = node->node.info.name;
+				task_tid = node->node.info.tid;
+				///////////////////////////////
+				task_mm_node_t *mnode = NULL,*tmnode = NULL;
+				list_for_each_entry_safe(mnode, tmnode,&node->node.list, list) {
+					mem_size += mnode->size;
+				}
+			}
+		}
+		printf("%-20s %-20u %-20x %-20u\n",task_name,task_pid,task_tid,mem_size);
+	} while(1);
+	
+}
 
 

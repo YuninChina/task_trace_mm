@@ -2,9 +2,9 @@
 
 PHONY : all
 
-TARGET_NAME ?= bin/mm_trace
-LIBCOMM_D_NAME ?= libs/libmm_trace.so
-LIBCOMM_S_NAME ?= libs/libmm_trace.a
+TARGET_NAME ?= bin/task
+LIBCOMM_D_NAME ?= libs/libtaskmm.so
+LIBCOMM_S_NAME ?= libs/libtaskmm.a
 
 #############################3
 
@@ -120,7 +120,7 @@ export AS LD CC CPP AR NM STRIP OBJCOPY OBJDUMP RANLIB CFLAGS LDFLAGS MERGE_LDFL
 
 TEST_CFLAGS ?= ${CFLAGS}
 LINK_PATH := -L libs
-LD_LIBS := -lmm_trace -lpthread -lm -lrt
+LD_LIBS := -ltaskmm -lpthread -lm -lrt
 PLATFORM_LIBS :=
 
 ifeq ($(CONFIG_SOC),T31)

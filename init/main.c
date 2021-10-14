@@ -7,6 +7,7 @@
 #include <assert.h>
 
 #include "mm.h"
+#include "task.h"
 
 int main(void)
 {
@@ -17,18 +18,9 @@ int main(void)
 	assert(p1);
 	p3 = MALLOC(30);
 	assert(p1);
-	/*
-	mm_show();
-
-	task_name_mm_show("mm_trace");
-	///////////////
-	FREE(p3);
-	mm_show();
-	FREE(p2);
-	mm_show();
-	FREE(p1);
-	mm_show();
-	*/
+	
+	task_mm_show();
+	
 	return 0;
 }
 
