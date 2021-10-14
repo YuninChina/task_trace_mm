@@ -213,11 +213,10 @@ void task_mm_show(void)
 }
 
 
-
+static task_t _task;
 static int __task_init(void)
 {
 	//printf("enter __task_init()\n");
-	static task_t _task;
 	static char _name[32] = {0,};
 	memset(&_task,0,sizeof(_task));
 	prctl(PR_GET_NAME,_name);
@@ -237,5 +236,11 @@ static int __task_init(void)
 	pthread_mutex_unlock(&task_mutex);
 }
 
+static void __task_exit(void)
+{
+	pthread_mutex_destroy(&_task.node.mutex);
+}
+
 pure_init(__task_init);
+module_exit(__task_exit);
 
