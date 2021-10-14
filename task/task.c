@@ -10,6 +10,7 @@
 
 #include "task.h"
 #include "klist.h"
+#include "inits.h"
 
 
 typedef struct task_info_s {
@@ -59,6 +60,7 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 	pthread_t thread_id;
 	task = malloc(sizeof(*task));
 	assert(task);
+	memset(task,0,sizeof(*task));
 	task->node.info.name = name;
 	task->node.info.stack_size = stack_size;
 	task->node.info.priority = priority;
@@ -118,6 +120,7 @@ void task_destroy(task_t *task)
 void task_mm_add(unsigned long tid,task_mm_node_t *mnode)
 {
 	task_t *node = NULL,*tmp = NULL;
+	
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
 		if(tid == node->node.info.tid)
 		{
@@ -209,4 +212,30 @@ void task_mm_show(void)
 	
 }
 
+
+
+static int __task_init(void)
+{
+	//printf("enter __task_init()\n");
+	static task_t _task;
+	static char _name[32] = {0,};
+	memset(&_task,0,sizeof(_task));
+	prctl(PR_GET_NAME,_name);
+	_task.node.info.name = _name;
+	_task.node.info.stack_size = 0;
+	_task.node.info.priority = 0;
+	_task.node.info.func = NULL;
+	_task.node.info.arg = NULL;
+	
+	_task.node.info.tid = (unsigned long)pthread_self();
+	_task.node.info.pid = (unsigned long)gettid();
+	
+	INIT_LIST_HEAD(&_task.node.list);
+	pthread_mutex_init(&_task.node.mutex, NULL);
+	pthread_mutex_lock(&task_mutex);
+	list_add_tail(&_task.list, &task_list);
+	pthread_mutex_unlock(&task_mutex);
+}
+
+pure_init(__task_init);
 

@@ -2,6 +2,10 @@
 #define __TASK__H
 #include "klist.h"
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef void *(*task_func_t)(void *);
 typedef struct task_s task_t;
 
@@ -21,6 +25,10 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 void task_destroy(task_t *task);
 void task_mm_add(unsigned long tid,task_mm_node_t *mnode);
 void task_mm_del(unsigned long tid,void *addr);
+
+#ifdef  __cplusplus
+}
+#endif
 
 
 #endif
