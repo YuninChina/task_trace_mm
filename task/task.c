@@ -173,7 +173,7 @@ void task_destroy(task_t *task)
 void task_mm_add(unsigned long tid,task_mm_node_t *mnode)
 {
 	task_t *node = NULL,*tmp = NULL;
-	
+	pthread_mutex_lock(&task_mutex);
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
 		if(tid == node->node.info.tid)
 		{
@@ -181,6 +181,7 @@ void task_mm_add(unsigned long tid,task_mm_node_t *mnode)
 			break;
 		}
 	}
+	pthread_mutex_unlock(&task_mutex);
 }
 
 

@@ -6,9 +6,12 @@
 extern "C" {
 #endif
 
+#define CONFIG_TASK_MM_TRACE 1
+
 typedef struct task_mm_node_s{
 	struct list_head list;
 	/////////////////////
+	char task_name[32];
 	unsigned long pid;  //process ID
 	unsigned long tid;  //thread ID
 	const char *func;

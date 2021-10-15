@@ -154,6 +154,8 @@ exit_t2:
 	task_destroy(t1);
 exit_t1:
 
+	mm_show();
+	
 	return 0;
 }
 
