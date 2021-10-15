@@ -31,7 +31,7 @@ struct task_s {
 		pthread_mutex_t mutex;
 		task_info_t info;
 	}node;
-	int exit;
+	task_self_t self;
 	sem_t sem;
 };
 
@@ -61,11 +61,12 @@ static void *__task_routine(void *arg)
 	pthread_detach(pthread_self());
 	task_t *task = (task_t *)arg;
 	assert(task);
+	task->self.exit = 0;
 	task->node.info.tid = (unsigned long)pthread_self();
 	task->node.info.pid = (unsigned long)gettid();
 	prctl(PR_SET_NAME,task->node.info.name);
 	if(task->node.info.func) 
-		task->node.info.func(task->node.info.arg);
+		task->node.info.func(&task->self,task->node.info.arg);
 	sem_post(&task->sem);
 	return NULL;
 }
@@ -82,7 +83,7 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 	task->node.info.priority = priority;
 	task->node.info.func = func;
 	task->node.info.arg = arg;
-	task->exit = 1;
+	task->self.exit = 1;
 	sem_init(&task->sem,0,0);
 	
 	INIT_LIST_HEAD(&task->node.list);
@@ -97,8 +98,40 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 		free(task);
 		return NULL;
 	}
-	task->exit = 0;
 	return task;
+}
+
+
+void task_exit(task_t *task)
+{
+	task_t *node = NULL,*tmp = NULL;
+	task_mm_node_t *mnode = NULL,*tmnode = NULL;
+	
+	if(task)
+	{
+		printf("task_exit: %s(%u : %u)\n",task->node.info.name,
+		task->node.info.pid,task->node.info.tid);
+		task->self.exit = 1;
+		sem_destroy(&task->sem);
+		pthread_mutex_lock(&task_mutex);
+		list_for_each_entry_safe(node, tmp,&task_list, list) {
+			if(node == task)
+			{
+				list_del(&node->list);
+				break;
+			}
+		}
+		pthread_mutex_unlock(&task_mutex);
+		
+		list_for_each_entry_safe(mnode, tmnode,&task->node.list, list) {
+			list_del(&mnode->list);
+			free(mnode);
+			break;
+		}
+		pthread_mutex_destroy(&task->node.mutex);
+		free(task);
+		task = NULL;
+	}
 }
 
 
@@ -111,10 +144,11 @@ void task_destroy(task_t *task)
 	{
 		printf("task_destroy: %s(%u : %u)\n",task->node.info.name,
 		task->node.info.pid,task->node.info.tid);
-		task->exit = 1;
+		task->self.exit = 1;
 		/* waiting task exit */
 		sem_wait(&task->sem);
 		sem_destroy(&task->sem);
+		pthread_mutex_lock(&task_mutex);
 		list_for_each_entry_safe(node, tmp,&task_list, list) {
 			if(node == task)
 			{
@@ -122,6 +156,7 @@ void task_destroy(task_t *task)
 				break;
 			}
 		}
+		pthread_mutex_unlock(&task_mutex);
 		
 		list_for_each_entry_safe(mnode, tmnode,&task->node.list, list) {
 			list_del(&mnode->list);
