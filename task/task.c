@@ -51,8 +51,7 @@ static void task_exit(task_t *task)
 	
 	if(task)
 	{
-		printf("task_exit: %s(%lu : %lu)\n",task->info.name,
-		task->info.pid,task->info.tid);
+		MLOGW("task_exit: %s(%lu : %lu)\n",task->info.name,task->info.pid,task->info.tid);
 		mt_async_queue_free(task->q);
 		task->q = NULL;
 		pthread_mutex_lock(&task_mutex);
