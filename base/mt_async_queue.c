@@ -31,7 +31,7 @@ mt_async_queue_t *mt_async_queue_new(void)
 	
 	return q;
 fail:
-	free(q);
+	FREE(q);
 	q = NULL;
 	return NULL;
 }
@@ -45,7 +45,7 @@ void mt_async_queue_free(mt_async_queue_t *q)
 		pthread_mutex_destroy(&q->mutex);
 		mt_queue_free(q->queue);
 		if(q->destroy) q->destroy(q,NULL);
-		free(q);
+		FREE(q);
 		q = NULL;
 	}
 }
