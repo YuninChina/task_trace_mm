@@ -208,20 +208,17 @@ void task_mm_del(unsigned long tid,void *addr)
 	task_t *node = NULL,*tmp = NULL;
 	pthread_mutex_lock(&task_mutex);
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
-		if(tid == node->info.tid)
-		{
-			task_mm_node_t *mnode = NULL,*tmnode = NULL;
-			list_for_each_entry_safe(mnode, tmnode,&node->head, list) {
-				if(addr == mnode->addr)
-				{
-					list_del(&mnode->list);
-					free(mnode);
-					break;
-				}
+		task_mm_node_t *mnode = NULL,*tmnode = NULL;
+		list_for_each_entry_safe(mnode, tmnode,&node->head, list) {
+			if(addr == mnode->addr)
+			{
+				list_del(&mnode->list);
+				free(mnode);
+				goto succ;
 			}
-			break;
 		}
 	}
+succ:	
 	pthread_mutex_unlock(&task_mutex);
 }
 
