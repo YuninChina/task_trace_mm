@@ -82,9 +82,9 @@ void *mt_queue_pop_tail(mt_queue_t *q)
 	list_for_each_entry_safe_reverse(queue, queue_next, &q->list,list) 
 	{
 		list_del(&queue->list);
+		data = queue->data;
 		FREE(queue);
 		queue = NULL;
-		data = queue->data;
 		break;
 	}
 	return data;
@@ -98,9 +98,9 @@ void *mt_queue_pop_head(mt_queue_t *q)
 	list_for_each_entry_safe(queue, queue_next, &q->list,list) 
 	{
 		list_del(&queue->list);
+		data = queue->data;
 		FREE(queue);
 		queue = NULL;
-		data = queue->data;
 		break;
 	}
 	return data;
