@@ -1,6 +1,7 @@
 #ifndef __TASK__H
 #define __TASK__H
 #include "klist.h"
+#include "mt_async_queue.h"
 
 #ifdef  __cplusplus
 extern "C" {
@@ -22,7 +23,7 @@ typedef struct task_mm_node_s{
 
 
 typedef struct task_self_s{
-	int exit;
+	mt_async_queue_t *q;
 }task_self_t;
 
 

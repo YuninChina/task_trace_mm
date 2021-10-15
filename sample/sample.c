@@ -22,11 +22,6 @@ static void *task_routine_no1(task_self_t *self,void *arg)
 		cnt++;
 		if(cnt > 5)
 			break;
-		if(0 != self->exit)
-		{
-			printf(">>>> Force task Exit!!!\n");
-			break;
-		}
 	}
 	return NULL;
 }
@@ -42,11 +37,6 @@ static void *task_routine_no2(task_self_t *self,void *arg)
 		cnt++;
 		if(cnt > 10)
 			break;
-		if(0 != self->exit)
-		{
-			printf(">>>> Force task Exit!!!\n");
-			break;
-		}
 	}
 	return NULL;
 }
@@ -64,11 +54,7 @@ static void *task_routine_normal(task_self_t *self,void *arg)
 		sleep(1);
 		if(cnt > 15)
 			break;
-		if(0 != self->exit)
-		{
-			printf(">>>> Force task Exit!!!\n");
-			break;
-		}
+		
 	}
 	return NULL;
 }
@@ -85,11 +71,6 @@ static void *task_routine_dummy(task_self_t *self,void *arg)
 		sleep(1);
 		if(cnt > 20)
 			break;
-		if(0 != self->exit)
-		{
-			printf(">>>> Force task Exit!!!\n");
-			break;
-		}
 	}
 	
 	return NULL;

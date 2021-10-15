@@ -48,7 +48,7 @@ static void task_exit(task_t *task)
 	{
 		printf("task_exit: %s(%u : %u)\n",task->node.info.name,
 		task->node.info.pid,task->node.info.tid);
-		task->self.exit = 1;
+		mt_async_queue_free(task->self.q);
 		pthread_mutex_lock(&task_mutex);
 		list_for_each_entry_safe(node, tmp,&task_list, list) {
 			if(node == task)
@@ -75,7 +75,6 @@ static void *__task_routine(void *arg)
 	pthread_detach(pthread_self());
 	task_t *task = (task_t *)arg;
 	assert(task);
-	task->self.exit = 0;
 	task->node.info.tid = (unsigned long)pthread_self();
 	task->node.info.pid = (unsigned long)gettid();
 	prctl(PR_SET_NAME,task->node.info.name);
@@ -97,7 +96,7 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 	task->node.info.priority = priority;
 	task->node.info.func = func;
 	task->node.info.arg = arg;
-	task->self.exit = 1;
+	task->self.q = mt_async_queue_new();
 	
 	INIT_LIST_HEAD(&task->node.list);
 	pthread_mutex_init(&task->node.mutex, NULL);
