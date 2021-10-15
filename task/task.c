@@ -32,11 +32,10 @@ typedef struct task_info_s {
 
 struct task_s {
 	struct list_head list;
-	struct __task_node_s {
-		struct list_head list;
-		pthread_mutex_t mutex;
-		task_info_t info;
-	}node;
+	///////////////////////
+	struct list_head head;
+	pthread_mutex_t mutex;
+	task_info_t info;
 	mt_async_queue_t *q;
 };
 
@@ -52,8 +51,8 @@ static void task_exit(task_t *task)
 	
 	if(task)
 	{
-		printf("task_exit: %s(%lu : %lu)\n",task->node.info.name,
-		task->node.info.pid,task->node.info.tid);
+		printf("task_exit: %s(%lu : %lu)\n",task->info.name,
+		task->info.pid,task->info.tid);
 		mt_async_queue_free(task->q);
 		task->q = NULL;
 		pthread_mutex_lock(&task_mutex);
@@ -66,12 +65,12 @@ static void task_exit(task_t *task)
 		}
 		pthread_mutex_unlock(&task_mutex);
 		
-		list_for_each_entry_safe(mnode, tmnode,&task->node.list, list) {
+		list_for_each_entry_safe(mnode, tmnode,&task->head, list) {
 			list_del(&mnode->list);
 			free(mnode);
 			break;
 		}
-		pthread_mutex_destroy(&task->node.mutex);
+		pthread_mutex_destroy(&task->mutex);
 		free(task);
 		task = NULL;
 	}
@@ -82,11 +81,11 @@ static void *__task_routine(void *arg)
 	pthread_detach(pthread_self());
 	task_t *task = (task_t *)arg;
 	assert(task);
-	task->node.info.tid = (unsigned long)pthread_self();
-	task->node.info.pid = (unsigned long)gettid();
-	prctl(PR_SET_NAME,task->node.info.name);
-	if(task->node.info.func) 
-		task->node.info.func(task->node.info.arg);
+	task->info.tid = (unsigned long)pthread_self();
+	task->info.pid = (unsigned long)gettid();
+	prctl(PR_SET_NAME,task->info.name);
+	if(task->info.func) 
+		task->info.func(task->info.arg);
 	task_exit(task);
 	return NULL;
 }
@@ -98,15 +97,15 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 	task = malloc(sizeof(*task));
 	assert(task);
 	memset(task,0,sizeof(*task));
-	task->node.info.name = name;
-	task->node.info.stack_size = stack_size;
-	task->node.info.priority = priority;
-	task->node.info.func = func;
-	task->node.info.arg = arg;
+	task->info.name = name;
+	task->info.stack_size = stack_size;
+	task->info.priority = priority;
+	task->info.func = func;
+	task->info.arg = arg;
 	task->q = mt_async_queue_new();
 	
-	INIT_LIST_HEAD(&task->node.list);
-	pthread_mutex_init(&task->node.mutex, NULL);
+	INIT_LIST_HEAD(&task->head);
+	pthread_mutex_init(&task->mutex, NULL);
 	pthread_mutex_lock(&task_mutex);
 	list_add_tail(&task->list, &task_list);
 	pthread_mutex_unlock(&task_mutex);
@@ -127,7 +126,7 @@ mt_async_queue_t *task_aq_get(const char *name)
 	task_t *node = NULL,*tmp = NULL;
 	pthread_mutex_lock(&task_mutex);
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
-		if(0 == strcmp(name,node->node.info.name))
+		if(0 == strcmp(name,node->info.name))
 		{
 			qq = node->q;
 			break;
@@ -143,9 +142,9 @@ const char *task_name_get_from_pid(unsigned long pid)
 	const char *name = NULL;
 	pthread_mutex_lock(&task_mutex);
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
-		if(pid == node->node.info.pid)
+		if(pid == node->info.pid)
 		{
-			name = node->node.info.name;
+			name = node->info.name;
 			break;
 		}
 	}
@@ -159,9 +158,9 @@ const char *task_name_get_from_tid(unsigned long tid)
 	const char *name = NULL;
 	pthread_mutex_lock(&task_mutex);
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
-		if(tid == node->node.info.tid)
+		if(tid == node->info.tid)
 		{
-			name = node->node.info.name;
+			name = node->info.name;
 			break;
 		}
 	}
@@ -177,7 +176,7 @@ mt_async_queue_t *task_aq_self(void)
 	unsigned long tid = (unsigned long)pthread_self();
 	pthread_mutex_lock(&task_mutex);
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
-		if(tid == node->node.info.tid)
+		if(tid == node->info.tid)
 		{
 			qq = node->q;
 			break;
@@ -194,9 +193,9 @@ void task_mm_add(unsigned long tid,task_mm_node_t *mnode)
 	task_t *node = NULL,*tmp = NULL;
 	pthread_mutex_lock(&task_mutex);
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
-		if(tid == node->node.info.tid)
+		if(tid == node->info.tid)
 		{
-			list_add_tail(&mnode->list, &node->node.list);
+			list_add_tail(&mnode->list, &node->head);
 			break;
 		}
 	}
@@ -209,10 +208,10 @@ void task_mm_del(unsigned long tid,void *addr)
 	task_t *node = NULL,*tmp = NULL;
 	pthread_mutex_lock(&task_mutex);
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
-		if(tid == node->node.info.tid)
+		if(tid == node->info.tid)
 		{
 			task_mm_node_t *mnode = NULL,*tmnode = NULL;
-			list_for_each_entry_safe(mnode, tmnode,&node->node.list, list) {
+			list_for_each_entry_safe(mnode, tmnode,&node->head, list) {
 				if(addr == mnode->addr)
 				{
 					list_del(&mnode->list);
@@ -268,13 +267,13 @@ void task_mm_show(void)
 		mem_size = 0;
 		task_name = NULL;
 		list_for_each_entry_safe(node, tmp,&task_list, list) {
-			if(task_pid == node->node.info.pid)
+			if(task_pid == node->info.pid)
 			{
-				task_name = node->node.info.name;
-				task_tid = node->node.info.tid;
+				task_name = node->info.name;
+				task_tid = node->info.tid;
 				///////////////////////////////
 				task_mm_node_t *mnode = NULL,*tmnode = NULL;
-				list_for_each_entry_safe(mnode, tmnode,&node->node.list, list) {
+				list_for_each_entry_safe(mnode, tmnode,&node->head, list) {
 					mem_size += mnode->size;
 				}
 			}
@@ -292,17 +291,17 @@ static int __task_init(void)
 	static char _name[32] = {0,};
 	memset(&_task,0,sizeof(_task));
 	prctl(PR_GET_NAME,_name);
-	_task.node.info.name = _name;
-	_task.node.info.stack_size = 0;
-	_task.node.info.priority = 0;
-	_task.node.info.func = NULL;
-	_task.node.info.arg = NULL;
+	_task.info.name = _name;
+	_task.info.stack_size = 0;
+	_task.info.priority = 0;
+	_task.info.func = NULL;
+	_task.info.arg = NULL;
 	
-	_task.node.info.tid = (unsigned long)pthread_self();
-	_task.node.info.pid = (unsigned long)gettid();
+	_task.info.tid = (unsigned long)pthread_self();
+	_task.info.pid = (unsigned long)gettid();
 	
-	INIT_LIST_HEAD(&_task.node.list);
-	pthread_mutex_init(&_task.node.mutex, NULL);
+	INIT_LIST_HEAD(&_task.head);
+	pthread_mutex_init(&_task.mutex, NULL);
 	pthread_mutex_lock(&task_mutex);
 	list_add_tail(&_task.list, &task_list);
 	pthread_mutex_unlock(&task_mutex);
@@ -311,7 +310,7 @@ static int __task_init(void)
 
 static void __task_exit(void)
 {
-	pthread_mutex_destroy(&_task.node.mutex);
+	pthread_mutex_destroy(&_task.mutex);
 }
 
 pure_init(__task_init);
