@@ -11,7 +11,7 @@
 #include "task.h"
 
 
-static void *task_routine_no1(task_self_t *self,void *arg)
+static void *task_routine_no1(void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -26,7 +26,7 @@ static void *task_routine_no1(task_self_t *self,void *arg)
 	return NULL;
 }
 
-static void *task_routine_no2(task_self_t *self,void *arg)
+static void *task_routine_no2(void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -42,7 +42,7 @@ static void *task_routine_no2(task_self_t *self,void *arg)
 }
 
 
-static void *task_routine_normal(task_self_t *self,void *arg)
+static void *task_routine_normal(void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -60,7 +60,7 @@ static void *task_routine_normal(task_self_t *self,void *arg)
 }
 
 
-static void *task_routine_dummy(task_self_t *self,void *arg)
+static void *task_routine_dummy(void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;

@@ -17,7 +17,7 @@
 #define TASK_CONSUMER1	"consumer1"
 #define TASK_CONSUMER2	"consumer2"
 
-static void *task_routine_no1(task_self_t *self,void *arg)
+static void *task_routine_no1(void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -32,7 +32,7 @@ static void *task_routine_no1(task_self_t *self,void *arg)
 	return NULL;
 }
 
-static void *task_routine_no2(task_self_t *self,void *arg)
+static void *task_routine_no2(void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -48,7 +48,7 @@ static void *task_routine_no2(task_self_t *self,void *arg)
 }
 
 
-static void *task_routine_normal(task_self_t *self,void *arg)
+static void *task_routine_normal(void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -66,7 +66,7 @@ static void *task_routine_normal(task_self_t *self,void *arg)
 }
 
 
-static void *task_routine_producer(task_self_t *self,void *arg)
+static void *task_routine_producer(void *arg)
 {
 	mt_msg_t *msg;
 	while (1)
@@ -97,7 +97,7 @@ static void *task_routine_producer(task_self_t *self,void *arg)
 	return NULL;
 }
 
-static void *task_routine_consumer1(task_self_t *self,void *arg)
+static void *task_routine_consumer1(void *arg)
 {
 	const char *str = NULL;
 	mt_msg_t *msg;
@@ -112,7 +112,7 @@ static void *task_routine_consumer1(task_self_t *self,void *arg)
 	return NULL;
 }
 
-static void *task_routine_consumer2(task_self_t *self,void *arg)
+static void *task_routine_consumer2(void *arg)
 {
 	const char *str = NULL;
 	mt_msg_t *msg;
