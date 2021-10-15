@@ -18,7 +18,6 @@ int mt_msg_send(mt_msg_t *msg)
 	RETURN_VAL_IF_FAIL(msg, -1);
 	mt_async_queue_t *q = NULL;
 	q = (mt_async_queue_t *)task_aq_get(msg->dst);
-	assert(q);
 	RETURN_VAL_IF_FAIL(q, -1);
 	mt_async_queue_push_tail(q, msg);
 	return 0;
