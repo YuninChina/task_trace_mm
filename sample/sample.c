@@ -11,7 +11,7 @@
 #include "task.h"
 
 
-static void *task_routine_no1(void *arg)
+static void *task_routine_no1(task_self_t *self,void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -22,11 +22,16 @@ static void *task_routine_no1(void *arg)
 		cnt++;
 		if(cnt > 5)
 			break;
+		if(0 != self->exit)
+		{
+			printf(">>>> Force task Exit!!!\n");
+			break;
+		}
 	}
 	return NULL;
 }
 
-static void *task_routine_no2(void *arg)
+static void *task_routine_no2(task_self_t *self,void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -37,12 +42,17 @@ static void *task_routine_no2(void *arg)
 		cnt++;
 		if(cnt > 10)
 			break;
+		if(0 != self->exit)
+		{
+			printf(">>>> Force task Exit!!!\n");
+			break;
+		}
 	}
 	return NULL;
 }
 
 
-static void *task_routine_normal(void *arg)
+static void *task_routine_normal(task_self_t *self,void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -54,12 +64,17 @@ static void *task_routine_normal(void *arg)
 		sleep(1);
 		if(cnt > 15)
 			break;
+		if(0 != self->exit)
+		{
+			printf(">>>> Force task Exit!!!\n");
+			break;
+		}
 	}
 	return NULL;
 }
 
 
-static void *task_routine_dummy(void *arg)
+static void *task_routine_dummy(task_self_t *self,void *arg)
 {
 	int cnt = 0;
 	void *p = NULL;
@@ -70,6 +85,11 @@ static void *task_routine_dummy(void *arg)
 		sleep(1);
 		if(cnt > 20)
 			break;
+		if(0 != self->exit)
+		{
+			printf(">>>> Force task Exit!!!\n");
+			break;
+		}
 	}
 	
 	return NULL;
@@ -118,7 +138,7 @@ int main(void)
 			if(p3) {FREE(p3); p3=NULL;}
 		}
 		cnt++;
-		if(cnt > 30)
+		if(cnt > 10)
 			break;
 	}
 	
