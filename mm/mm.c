@@ -13,9 +13,11 @@
 void *mm_malloc(const char *func,unsigned long line,unsigned long size)
 {
 	void *addr = NULL;
-	task_mm_node_t *node = NULL;
 	addr = malloc(size);
 	assert(addr);
+
+#if defined(CONFIG_TASK_MM)	
+	task_mm_node_t *node = NULL;
 	node = malloc(sizeof(*node));
 	assert(node);
 	node->tid = (unsigned long)pthread_self();
@@ -26,43 +28,25 @@ void *mm_malloc(const char *func,unsigned long line,unsigned long size)
 	node->addr = addr;
 
 	task_mm_add(node->tid,node);
-	
+#endif
+
 	return addr;
 }
 
 
 void mm_free(void *addr)
 {
-	unsigned long tid;  //thread ID
 	if(addr)
 	{
+#if defined(CONFIG_TASK_MM)	
+		unsigned long tid;	//thread ID
 		tid = (unsigned long)pthread_self();
 		task_mm_del(tid,addr);
+#endif
 		free(addr);
 		addr = NULL;
 	}
 }
 
-
-const char *task_name_get(unsigned long ppid,unsigned long pid,char *buf,unsigned int buf_size)
-{
-#define TASK_NAME_CMD "cat /proc/%d/task/%d/status | grep Name | xargs | sed 's/Name: \\(.*\\)/\\1/g'"
-	char cmd[1024] = {0,};
-	FILE *fp = NULL;
-	char *p_ret = NULL;
-	memset(cmd,0,sizeof(cmd));
-    snprintf(cmd,sizeof(cmd),TASK_NAME_CMD,ppid,pid);
-    //printf("+++ %s\n",cmd);
-    fp = popen (cmd, "r");
-    assert(fp);
-	memset(buf,0,buf_size);
-	p_ret = fgets (buf, buf_size, fp);
-    assert(p_ret);
-    fclose(fp);
-    fp = NULL;
-    buf[strlen(buf)-1] = 0;  //去掉最后换行符.
-    //printf(">>> %s (%d)\n",buf,strlen(buf));
-    return buf;
-}
 
 
