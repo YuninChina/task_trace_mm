@@ -22,7 +22,7 @@ int main(void)
 
 	while(1)
 	{
-		system("clear");
+		if(system("clear"));
 		task_mm_show();
 		sleep(1);
 		if(cnt == 3*1)

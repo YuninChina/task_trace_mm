@@ -30,9 +30,9 @@ mt_msg_t *mt_msg_recv(void)
 	mt_msg_t *msg = NULL;
 	mt_async_queue_t *q;
 	q = task_aq_self();
-	RETURN_VAL_IF_FAIL(q, -1);
+	RETURN_VAL_IF_FAIL(q, NULL);
 	msg = mt_async_queue_pop_head(q);
-	RETURN_VAL_IF_FAIL(msg, -1);
+	RETURN_VAL_IF_FAIL(msg, NULL);
 	return msg;
 }
 

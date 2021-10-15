@@ -7,6 +7,7 @@
 #include <strings.h>
 #include <string.h>
 
+
 void time2str(char *buf,int size)
 {
     assert(buf && size > 0);
@@ -33,5 +34,4 @@ void thread_name_set(const char *task_name)
 {
 	prctl(PR_SET_NAME,task_name);
 }
-
 

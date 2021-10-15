@@ -1,17 +1,22 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <pthread.h>
 #include <assert.h>
 #include <sys/prctl.h>
 #include <semaphore.h>
 
+#define _GNU_SOURCE
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "task.h"
 #include "klist.h"
 #include "inits.h"
 #include "mt_log.h"
+#include "mt_misc.h"
 
 
 typedef struct task_info_s {
@@ -32,7 +37,7 @@ struct task_s {
 		pthread_mutex_t mutex;
 		task_info_t info;
 	}node;
-	task_self_t self;
+	mt_async_queue_t *q;
 };
 
 
@@ -47,10 +52,10 @@ static void task_exit(task_t *task)
 	
 	if(task)
 	{
-		printf("task_exit: %s(%u : %u)\n",task->node.info.name,
+		printf("task_exit: %s(%lu : %lu)\n",task->node.info.name,
 		task->node.info.pid,task->node.info.tid);
-		mt_async_queue_free(task->self.q);
-		task->self.q = NULL;
+		mt_async_queue_free(task->q);
+		task->q = NULL;
 		pthread_mutex_lock(&task_mutex);
 		list_for_each_entry_safe(node, tmp,&task_list, list) {
 			if(node == task)
@@ -81,7 +86,7 @@ static void *__task_routine(void *arg)
 	task->node.info.pid = (unsigned long)gettid();
 	prctl(PR_SET_NAME,task->node.info.name);
 	if(task->node.info.func) 
-		task->node.info.func(&task->self,task->node.info.arg);
+		task->node.info.func(task->node.info.arg);
 	task_exit(task);
 	return NULL;
 }
@@ -98,7 +103,7 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 	task->node.info.priority = priority;
 	task->node.info.func = func;
 	task->node.info.arg = arg;
-	task->self.q = mt_async_queue_new();
+	task->q = mt_async_queue_new();
 	
 	INIT_LIST_HEAD(&task->node.list);
 	pthread_mutex_init(&task->node.mutex, NULL);
@@ -124,7 +129,7 @@ mt_async_queue_t *task_aq_get(const char *name)
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
 		if(0 == strcmp(name,node->node.info.name))
 		{
-			qq = node->self.q;
+			qq = node->q;
 			break;
 		}
 	}
@@ -141,7 +146,7 @@ mt_async_queue_t *task_aq_self(void)
 	list_for_each_entry_safe(node, tmp,&task_list, list) {
 		if(tid == node->node.info.tid)
 		{
-			qq = node->self.q;
+			qq = node->q;
 			break;
 		}
 	}
@@ -199,7 +204,6 @@ void task_mm_show(void)
     char time[64] = {0,};
     char *pResult = NULL;
     unsigned long task_pid = 0,task_tid = 0;
-	int i = 0;
 	unsigned long mem_size = 0;
 	const char *task_name = NULL;
 	pid_t pid = getpid();
@@ -223,7 +227,7 @@ void task_mm_show(void)
 		sub = strtok(str," ");
 		if(NULL == sub)
 			break;
-		sscanf(str,"%u",&task_pid);
+		sscanf(str,"%lu",&task_pid);
 		//printf("pid=%d, task_pid: %d\n",pid,task_pid);
 		str += (strlen(sub)+1);
 
@@ -242,7 +246,7 @@ void task_mm_show(void)
 				}
 			}
 		}
-		printf("%-20s %-20u %-20u %-20u\n",task_name,task_pid,task_tid,mem_size);
+		printf("%-20s %-20lu %-20lu %-20lu\n",task_name,task_pid,task_tid,mem_size);
 	} while(1);
 	
 }
@@ -269,6 +273,7 @@ static int __task_init(void)
 	pthread_mutex_lock(&task_mutex);
 	list_add_tail(&_task.list, &task_list);
 	pthread_mutex_unlock(&task_mutex);
+	return 0;
 }
 
 static void __task_exit(void)

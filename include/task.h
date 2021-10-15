@@ -21,13 +21,7 @@ typedef struct task_mm_node_s{
 	void *addr;
 }task_mm_node_t;
 
-
-typedef struct task_self_s{
-	mt_async_queue_t *q;
-}task_self_t;
-
-
-typedef void *(*task_func_t)(task_self_t *self,void *user_data);
+typedef void *(*task_func_t)(void *user_data);
 typedef struct task_s task_t;
 
 

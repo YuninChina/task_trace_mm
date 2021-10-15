@@ -1,3 +1,5 @@
+#define _GNU_SOURCE             /* See feature_test_macros(7) */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -5,6 +7,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <assert.h>
+#include <sys/types.h>
 
 #include "mm.h"
 #include "task.h"
@@ -95,7 +98,7 @@ void mm_show(void)
 	printf("%-15s %-15s %-15s %-32s %-15s %-15s %-15s\n",
 	"[task]","[tid]","[pid]","[function]","[line]","[addr]","[size]");
 	list_for_each_entry_safe(node, tmp,&mm_list, list) {
-		printf("%-15s %-15u %-15u %-32s %-15d %-15p %-15d\n",
+		printf("%-15s %-15lu %-15lu %-32s %-15lu %-15p %-15lu\n",
 		node->task_name,node->tid,node->pid,node->func,node->line,node->addr,node->size);
 	}
 }
