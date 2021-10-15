@@ -2,8 +2,8 @@
 #define __MT_MSG_H
 
 typedef struct mt_msg_s {
-	unsigned int src;
-	unsigned int dst;
+	const char *src;
+	const char *dst;
 	int priority;
 	unsigned int size;
 	unsigned char data[0];

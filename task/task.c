@@ -49,6 +49,7 @@ static void task_exit(task_t *task)
 		printf("task_exit: %s(%u : %u)\n",task->node.info.name,
 		task->node.info.pid,task->node.info.tid);
 		mt_async_queue_free(task->self.q);
+		task->self.q = NULL;
 		pthread_mutex_lock(&task_mutex);
 		list_for_each_entry_safe(node, tmp,&task_list, list) {
 			if(node == task)
@@ -114,7 +115,21 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 }
 
 
-
+mt_async_queue_t *task_aq_get(const char *name)
+{
+	mt_async_queue_t *qq = NULL;
+	task_t *node = NULL,*tmp = NULL;
+	pthread_mutex_lock(&task_mutex);
+	list_for_each_entry_safe(node, tmp,&task_list, list) {
+		if(0 == strcmp(name,node->node.info.name))
+		{
+			qq = node->self.q;
+			break;
+		}
+	}
+	pthread_mutex_unlock(&task_mutex);
+	return qq;
+}
 
 
 void task_mm_add(unsigned long tid,task_mm_node_t *mnode)

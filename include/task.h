@@ -36,6 +36,8 @@ task_t *task_create(const char *name,unsigned long stack_size,int priority,task_
 void task_mm_show(void);
 void task_mm_add(unsigned long tid,task_mm_node_t *mnode);
 void task_mm_del(unsigned long tid,void *addr);
+mt_async_queue_t *task_aq_get(const char *name);
+
 
 #ifdef  __cplusplus
 }
