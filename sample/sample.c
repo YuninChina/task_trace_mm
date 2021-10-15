@@ -111,13 +111,9 @@ int main(void)
 	task_t *t1 = NULL,*t2 = NULL,*t3 = NULL,*t4 = NULL;
 	
 	t1 = task_create("no1",0,0, task_routine_no1, (void *)NULL);
-	if(NULL == t1) goto exit_t1;
 	t2 = task_create("no2",0,0, task_routine_no2, (void *)NULL);
-	if(NULL == t2) goto exit_t2;
 	t3 = task_create("normal",0,0, task_routine_normal, (void *)NULL);
-	if(NULL == t3) goto exit_t3;
 	t4 = task_create("dummy",0,0, task_routine_dummy, (void *)NULL);
-	if(NULL == t4) goto exit_t4;
 	
 	while(1)
 	{
@@ -141,18 +137,6 @@ int main(void)
 		if(cnt > 10)
 			break;
 	}
-	
-	task_destroy(t4);
-	
-exit_t4:
-	task_destroy(t3);
-	
-exit_t3:
-	task_destroy(t2);
-	
-exit_t2:
-	task_destroy(t1);
-exit_t1:
 
 	mm_show();
 	
