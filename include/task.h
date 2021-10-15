@@ -32,6 +32,8 @@ void task_mm_add(unsigned long tid,task_mm_node_t *mnode);
 void task_mm_del(unsigned long tid,void *addr);
 mt_async_queue_t *task_aq_get(const char *name);
 mt_async_queue_t *task_aq_self(void);
+const char *task_name_get_from_pid(unsigned long pid);
+const char *task_name_get_from_tid(unsigned long tid);
 
 
 #ifdef  __cplusplus

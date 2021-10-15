@@ -137,6 +137,39 @@ mt_async_queue_t *task_aq_get(const char *name)
 	return (mt_async_queue_t *)qq;
 }
 
+const char *task_name_get_from_pid(unsigned long pid)
+{
+	task_t *node = NULL,*tmp = NULL;
+	const char *name = NULL;
+	pthread_mutex_lock(&task_mutex);
+	list_for_each_entry_safe(node, tmp,&task_list, list) {
+		if(pid == node->node.info.pid)
+		{
+			name = node->node.info.name;
+			break;
+		}
+	}
+	pthread_mutex_unlock(&task_mutex);
+	return name;
+}
+
+const char *task_name_get_from_tid(unsigned long tid)
+{
+	task_t *node = NULL,*tmp = NULL;
+	const char *name = NULL;
+	pthread_mutex_lock(&task_mutex);
+	list_for_each_entry_safe(node, tmp,&task_list, list) {
+		if(tid == node->node.info.tid)
+		{
+			name = node->node.info.name;
+			break;
+		}
+	}
+	pthread_mutex_unlock(&task_mutex);
+	return name;
+}
+
+
 mt_async_queue_t *task_aq_self(void)
 {
 	mt_async_queue_t *qq = NULL;

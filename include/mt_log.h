@@ -93,6 +93,16 @@ void mt_log_assert(const char *source
 			return;\
 		}\
 	})
+
+#undef RETURN_IF_FAIL2
+#define RETURN_IF_FAIL2(expr,_actions)  ({\
+				if (!(expr))\
+				{\
+					{_actions};\
+					mt_log_assert(NULL,#expr,__FILE__, __LINE__,NULL);\
+					return;\
+				}\
+			})
 	
 #undef RETURN_IF_FAIL_ARGS
 #define RETURN_IF_FAIL_ARGS(expr,args...)  ({\
@@ -112,6 +122,16 @@ void mt_log_assert(const char *source
 			return return_val;\
 		}\
 	})
+
+#undef RETURN_VAL_IF_FAIL2
+#define RETURN_VAL_IF_FAIL2(expr,_actions,return_val)  ({\
+				if (!(expr))\
+				{\
+					{_actions};\
+					mt_log_assert(NULL,#expr,__FILE__, __LINE__,NULL);\
+					return return_val;\
+				}\
+			})
 	
 	
 #undef RETURN_VAL_IF_FAIL_ARGS
