@@ -21,7 +21,7 @@ struct mt_async_queue_s {
 mt_async_queue_t *mt_async_queue_new(void)
 {
 	mt_async_queue_t *q = NULL;
-	q = malloc(sizeof(*q));
+	q = MALLOC(sizeof(*q));
 	RETURN_VAL_IF_FAIL(q, NULL);
 	memset(q,0,sizeof(*q));	
 	q->queue = mt_queue_new();

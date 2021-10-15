@@ -16,7 +16,7 @@ struct mt_queue_s {
 mt_queue_t *mt_queue_new(void)
 {
 	mt_queue_t *q = NULL;
-	q = malloc(sizeof(*q));
+	q = MALLOC(sizeof(*q));
 	RETURN_VAL_IF_FAIL(q, NULL);
 	memset(q,0,sizeof(*q));
 	INIT_LIST_HEAD(&q->list);
@@ -57,7 +57,7 @@ void mt_queue_push_tail(mt_queue_t *q,void *data)
 {
 	mt_queue_t *node = NULL;
 	RETURN_IF_FAIL(q);
-	node = malloc(sizeof(*node));
+	node = MALLOC(sizeof(*node));
 	RETURN_IF_FAIL(node);
 	node->data = data;
 	list_add_tail(&node->list, &q->list);
@@ -67,7 +67,7 @@ void mt_queue_push_head(mt_queue_t *q,void *data)
 {
 	mt_queue_t *node = NULL;
 	RETURN_IF_FAIL(q);
-	node = malloc(sizeof(*node));
+	node = MALLOC(sizeof(*node));
 	RETURN_IF_FAIL(node);
 	node->data = data;
 	list_add(&node->list, &q->list);
