@@ -131,6 +131,24 @@ mt_async_queue_t *task_aq_get(const char *name)
 	return qq;
 }
 
+mt_async_queue_t *task_aq_self(void)
+{
+	mt_async_queue_t *qq = NULL;
+	task_t *node = NULL,*tmp = NULL;
+	unsigned long tid = (unsigned long)pthread_self();
+	pthread_mutex_lock(&task_mutex);
+	list_for_each_entry_safe(node, tmp,&task_list, list) {
+		if(tid == node->node.info.tid)
+		{
+			qq = node->self.q;
+			break;
+		}
+	}
+	pthread_mutex_unlock(&task_mutex);
+	return qq;
+}
+
+
 
 void task_mm_add(unsigned long tid,task_mm_node_t *mnode)
 {
