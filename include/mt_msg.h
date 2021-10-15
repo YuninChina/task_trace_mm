@@ -11,7 +11,7 @@ typedef struct mt_msg_s {
 
 
 int mt_msg_send(mt_msg_t *msg);
-void *mt_msg_recv(void);
+mt_msg_t *mt_msg_recv(void);
 
 
 #endif

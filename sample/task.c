@@ -87,7 +87,7 @@ static void *task_routine_producer(task_self_t *self,void *arg)
 		memset(msg,0,(sizeof(*msg)+32));
 		strcpy(msg->data,"world");
 		msg->src = TASK_PRODUCER;
-		msg->dst = TASK_CONSUMER1;
+		msg->dst = TASK_CONSUMER2;
 		msg->priority = 0;
 		msg->size = 32;
 		mt_msg_send(msg);
@@ -100,10 +100,13 @@ static void *task_routine_producer(task_self_t *self,void *arg)
 static void *task_routine_consumer1(task_self_t *self,void *arg)
 {
 	const char *str = NULL;
+	mt_msg_t *msg;
 	while (1)
 	{
-		str = mt_msg_recv();
-		MLOGD("str: %s\n",str);
+		msg = mt_msg_recv();
+		str = msg->data;
+		MLOGM("[From: %s To: %s]str: %s\n",msg->src,msg->dst,str);
+		FREE(msg);
 	}
 	
 	return NULL;
@@ -112,10 +115,13 @@ static void *task_routine_consumer1(task_self_t *self,void *arg)
 static void *task_routine_consumer2(task_self_t *self,void *arg)
 {
 	const char *str = NULL;
+	mt_msg_t *msg;
 	while (1)
 	{
-		str = mt_msg_recv();
-		MLOGD("str: %s\n",str);
+		msg = mt_msg_recv();
+		str = msg->data;
+		MLOGM("[From: %s To: %s]str: %s\n",msg->src,msg->dst,str);
+		FREE(msg);
 	}
 	
 	return NULL;
@@ -128,6 +134,7 @@ int main(void)
 {
 	void *p1,*p2,*p3;
 	int cnt = 0;
+	MLOGD("Task start ....");
 	p1 = MALLOC(10);
 	assert(p1);
 	p2 = MALLOC(20);
@@ -144,8 +151,9 @@ int main(void)
 	
 	while(1)
 	{
-		system("clear");
+		//system("clear");
 		task_mm_show();
+		mm_show();
 		sleep(1);
 
 		if(cnt == 3*1)
@@ -161,9 +169,9 @@ int main(void)
 			if(p3) {FREE(p3); p3=NULL;}
 		}
 		cnt++;
+		
 	}
 
-	mm_show();
 	
 	return 0;
 }

@@ -11,6 +11,7 @@
 #include "task.h"
 #include "klist.h"
 #include "inits.h"
+#include "mt_log.h"
 
 
 typedef struct task_info_s {
@@ -128,7 +129,7 @@ mt_async_queue_t *task_aq_get(const char *name)
 		}
 	}
 	pthread_mutex_unlock(&task_mutex);
-	return qq;
+	return (mt_async_queue_t *)qq;
 }
 
 mt_async_queue_t *task_aq_self(void)
