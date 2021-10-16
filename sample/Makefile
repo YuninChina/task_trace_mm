@@ -3,4 +3,5 @@ obj-y :=
 obj-y += sample.o
 obj-y += task.o
 obj-y += task_json.o
+obj-y += task_broadcast.o
 

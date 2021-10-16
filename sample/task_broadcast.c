@@ -10,93 +10,126 @@
 #include "broadcast.h"
 #include "parson.h"
 
+#include "mm.h"
+#include "mt_msg.h"
+#include "mt_log.h"
+
+#define TASK_PRODUCER	"producer"
+#define TASK_CONSUMER1	"consumer1"
+#define TASK_CONSUMER2	"consumer2"
+
+
+static void *task_routine_producer(void *arg)
+{
+	mt_msg_t *msg;
+	int cnt = 0;
+	while (1)
+	{
+		msg = MALLOC(sizeof(*msg)+32);
+		assert(msg);
+		MLOGM("msg1=%p\n",msg);
+		memset(msg,0,(sizeof(*msg)+32));
+		strcpy(msg->data,"hello");
+		msg->src = TASK_PRODUCER;
+		msg->dst = TASK_CONSUMER1;
+		msg->priority = 0;
+		msg->size = 32;
+		if(mt_msg_send(msg))
+		{
+			FREE(msg);
+			msg = NULL;
+		}
+		sleep(1);
+		
+		msg = MALLOC(sizeof(*msg)+32);
+		assert(msg);
+		MLOGM("msg2=%p\n",msg);
+		memset(msg,0,(sizeof(*msg)+32));
+		strcpy(msg->data,"world");
+		msg->src = TASK_PRODUCER;
+		msg->dst = TASK_CONSUMER2;
+		msg->priority = 0;
+		msg->size = 32;
+		if(mt_msg_send(msg))
+		{
+			FREE(msg);
+			msg = NULL;
+		}
+		sleep(1);
+		if(cnt++ > 5)
+			break;
+	}
+	
+	return NULL;
+}
+
+static void *task_routine_consumer1(void *arg)
+{
+	const char *str = NULL;
+	mt_msg_t *msg;
+	int cnt = 0;
+	while (1)
+	{
+		msg = mt_msg_recv();
+		str = msg->data;
+		MLOGM("[From: %s To: %s]str: %s\n",msg->src,msg->dst,str);
+		FREE(msg);
+		if(cnt++ > 3)
+			break;
+	}
+	
+	return NULL;
+}
+
+static void *task_routine_consumer2(void *arg)
+{
+	const char *str = NULL;
+	mt_msg_t *msg;
+	int cnt = 0;
+	while (1)
+	{
+		msg = mt_msg_recv();
+		str = msg->data;
+		MLOGM("[From: %s To: %s]str: %s\n",msg->src,msg->dst,str);
+		FREE(msg);
+		if(cnt++ > 2)
+			break;
+	}
+	
+	return NULL;
+}
+
+
 int main(int argc ,char *argv[])  
 {
 	const char *process_name = NULL;
-	task_arr_t taskArr;
 	int ret = -1;
 	int i;
 	broadcast_t *b = NULL;
 	unsigned short port = 6666;
-	if (argc != 3) {
-		fprintf(stderr, "Usage: %s <process_name> <port>\n", argv[0]);
+	char *pjson = NULL;
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <port>\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	process_name = argv[1];
-	assert(1 == sscanf(argv[2],"%hu",&port));
+	assert(1 == sscanf(argv[1],"%hu",&port));
+	
+	task_create(TASK_PRODUCER,0,0, task_routine_producer, (void *)NULL);
+	task_create(TASK_CONSUMER1,0,0, task_routine_consumer1, (void *)NULL);
+	task_create(TASK_CONSUMER2,0,0, task_routine_consumer2, (void *)NULL);
+	
 	b = broadcast_create(BROADCAST_TYPE_SERVER,port);
 	assert(b);
 	
 	while(1)
 	{
-		//
-		ret = system("clear");
-		assert(0 == ret);
-		printf("%-20s %-8s %-8s %-12s %-12s %-12s %-12s %-12s %-12s %-8s %-4s\n",
-		"task_name",
-		"task_id",
-		"state",
-		"threads",
-		"cpu_utime",
-		"cpu_stime",
-		"cpu_cutime",
-		"cpu_cstime",
-		"priority",
-		"nice",
-		"cpu"
-		);
-		printf("==============================================================="
-		"==================================================================\n");
-		bzero(&taskArr,sizeof(taskArr));
-		task_info_new(process_name,&taskArr);
-		task_info_show(&taskArr);
-		/////////////////////////////
-		JSON_Value *jValRoot = json_value_init_array();
-		assert(jValRoot);
-		JSON_Array *jArrRoot = json_array(jValRoot);
-		assert(jArrRoot);
-		for(i = 0;i < taskArr.num;i++)
+		if(0 == task_mm_json_get(&pjson))
 		{
-			JSON_Value *jVal = NULL;
-			JSON_Object *jObj = NULL;
-			jVal = json_value_init_object();
-			assert(jVal);
-			jObj = json_value_get_object(jVal);
-			assert(jObj);
-			json_object_dotset_number(jObj, "id", taskArr.array[i].id);
-			json_object_dotset_string(jObj, "name", taskArr.array[i].name);
-			json_object_dotset_number(jObj, "state", taskArr.array[i].state);
-			json_object_dotset_number(jObj, "utime", taskArr.array[i].utime);
-			json_object_dotset_number(jObj, "stime", taskArr.array[i].stime);
-			json_object_dotset_number(jObj, "cutime", taskArr.array[i].cutime);
-			json_object_dotset_number(jObj, "priority", taskArr.array[i].cstime);
-			json_object_dotset_number(jObj, "priority", taskArr.array[i].priority);
-			json_object_dotset_number(jObj, "nice", taskArr.array[i].nice);
-			json_object_dotset_number(jObj, "cpu", taskArr.array[i].cpu);
-			json_object_dotset_number(jObj, "num_threads", taskArr.array[i].num_threads);
-			json_array_append_value(jArrRoot,jVal);
+			printf("JSON:\n%s\n",pjson);
+			FREE(pjson);
+			/////////////////////////////
+			broadcast_send(b, (unsigned char *)pjson, strlen(pjson));
 		}
-		//
-		char *jStr = json_serialize_to_string(jValRoot);
-		broadcast_send(b, (unsigned char *)jStr, strlen(jStr));
-		if(jStr) 
-		{
-			free(jStr);
-			jStr = NULL;
-		}
-		//
-		if(jArrRoot)
-		{
-			json_array_clear(jArrRoot);
-			jArrRoot = NULL;
-		}
-		if(jValRoot)
-		{
-			json_value_free(jValRoot);
-			jValRoot = NULL;
-		}
-		/////////////////////////////
-		task_info_free(&taskArr);
 		/////////////////////////////
 		sleep(1);
 	}

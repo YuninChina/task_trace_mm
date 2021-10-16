@@ -237,7 +237,7 @@ void task_mm_show(void)
 	//////////////////////////////
     time2str(time,sizeof(time));
 	printf("\n\n=========================================== task_mm_show [%s] ===========================================\n",time);
-	printf("%-20s %-20s %-20s %-20s\n","[task]","[task_pid]","[task_tid]","[size]");
+	printf("%-20s %-20s %-20s %-20s\n","[name]","[pid]","[tid]","[size]");
 	
 	ret = child_pid_get(&p_arr,&arr_size);
 	RETURN_IF_FAIL(0 == ret);
@@ -326,9 +326,9 @@ int task_mm_json_get(char **ppjson)
 		assert(jVal);
 		jObj = json_value_get_object(jVal);
 		assert(jObj);
-		json_object_dotset_string(jObj, "task", task_name);
-		json_object_dotset_number(jObj, "task_pid", task_pid);
-		json_object_dotset_number(jObj, "task_tid", task_tid);
+		json_object_dotset_string(jObj, "name", task_name);
+		json_object_dotset_number(jObj, "pid", task_pid);
+		json_object_dotset_number(jObj, "tid", task_tid);
 		json_object_dotset_number(jObj, "size", mem_size);
 		json_array_append_value(jArrRoot,jVal);
 	} while(1);
