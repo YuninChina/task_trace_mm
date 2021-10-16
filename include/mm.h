@@ -10,6 +10,8 @@ extern "C" {
 void *mm_malloc(const char *func,unsigned long line,unsigned long size);
 void mm_free(void *addr);
 void mm_show(void);
+void *mm_list_get(void);
+unsigned int mm_list_size(void);
 
 #define MALLOC(size)	mm_malloc(__func__,__LINE__,size)
 #define FREE(addr)		mm_free(addr)

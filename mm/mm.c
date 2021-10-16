@@ -104,3 +104,19 @@ void mm_show(void)
 }
 
 
+void *mm_list_get(void)
+{
+	return (void *)&mm_list;
+}
+
+unsigned int mm_list_size(void)
+{
+	unsigned int cnt = 0;
+	task_mm_node_t *node = NULL,*tmp = NULL;
+	list_for_each_entry_safe(node, tmp,&mm_list, list) {
+		cnt++;
+	}
+	return cnt;
+}
+
+
