@@ -48,13 +48,15 @@ int child_pid_serialize2string(char *strs,unsigned int size)
 	pid_t pid = getpid();
 	memset(cmd,0,sizeof(cmd));
     snprintf(cmd,sizeof(cmd),CHILD_PID_CMD,pid);
+	//printf("cmd: %s\n",cmd);
     fp = popen (cmd, "r");
     assert(fp);
 	memset(strs,0,size);
-	pResult = fgets (strs, sizeof (strs), fp);
+	pResult = fgets (strs, size, fp);
     assert(pResult);
     fclose(fp);
     fp = NULL;
+	//printf("strs: %s\n",strs);
     return 0;
 }
 
@@ -70,28 +72,36 @@ int child_pid_get(unsigned long **pp_arr,unsigned int *p_size)
     unsigned long *p_arr = NULL;
 	ret = child_pid_serialize2string(buf,sizeof(buf));
 	RETURN_VAL_IF_FAIL(0 == ret, -1);
+
 	for(i = 0;i < sizeof(buf) && 0 != buf[i];i++)
 	{
 		if(' ' == buf[i])
 			cnt++;
 	}
-	
+	cnt += 1;
 	p_arr = MALLOC(cnt*sizeof(unsigned long));
 	RETURN_VAL_IF_FAIL(p_arr, -1);
 
 	i = 0;
+	str = buf;
 	do {
 		sub = strtok(str," ");
 		if(NULL == sub)
 			break;
-		sscanf(str,"%lu",&p_arr[i++]);
-		//printf("pid=%d, task_pid: %d\n",pid,task_pid);
+		sscanf(str,"%lu",&p_arr[i]);
 		str += (strlen(sub)+1);
-
+		i++;
 	} while(1);
 	
 	*p_size = cnt;
 	*pp_arr = p_arr;
 	return 0;
 }
+
+
+void child_pid_free(unsigned long *p_arr)
+{
+	if(p_arr) FREE(p_arr);
+}
+
 

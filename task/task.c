@@ -226,40 +226,24 @@ succ:
 void task_mm_show(void)
 {
 	task_t *node = NULL,*tmp = NULL;
-
-	char cmd[1024] = {0,};
-	FILE *fp = NULL;
-    char buf[1024] = {0,};
     char time[64] = {0,};
-    char *pResult = NULL;
     unsigned long task_pid = 0,task_tid = 0;
 	unsigned long mem_size = 0;
 	const char *task_name = NULL;
-	pid_t pid = getpid();
-	memset(cmd,0,sizeof(cmd));
-    snprintf(cmd,sizeof(cmd),"ls /proc/%d/task/ | xargs",pid);
-    fp = popen (cmd, "r");
-    assert(fp);
-	memset(buf,0,sizeof(buf));
-	pResult = fgets (buf, sizeof (buf), fp);
-    assert(pResult);
-    fclose(fp);
-    fp = NULL;
-    //printf("%s\n",buf);
+	unsigned long *p_arr = NULL;
+	unsigned int arr_size = 0;
+	int ret = 0;
+	int i;
+	//////////////////////////////
     time2str(time,sizeof(time));
 	printf("\n\n=========================================== task_mm_show [%s] ===========================================\n",time);
 	printf("%-20s %-20s %-20s %-20s\n","[task]","[task_pid]","[task_tid]","[size]");
 	
-    char *sub = NULL,*str = NULL;
-	str = buf;
-	do {
-		sub = strtok(str," ");
-		if(NULL == sub)
-			break;
-		sscanf(str,"%lu",&task_pid);
-		//printf("pid=%d, task_pid: %d\n",pid,task_pid);
-		str += (strlen(sub)+1);
-
+	ret = child_pid_get(&p_arr,&arr_size);
+	RETURN_IF_FAIL(0 == ret);
+	for(i = 0;i < arr_size;i++)
+	{
+		task_pid = p_arr[i];
 		///////////////////////////////
 		mem_size = 0;
 		task_name = NULL;
@@ -276,8 +260,8 @@ void task_mm_show(void)
 			}
 		}
 		printf("%-20s %-20lu %-20lu %-20lu\n",task_name,task_pid,task_tid,mem_size);
-	} while(1);
-	
+	}
+	child_pid_free(p_arr);
 }
 
 int task_mm_json_get(char **ppjson)
