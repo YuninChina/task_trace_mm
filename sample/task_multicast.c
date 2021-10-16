@@ -129,9 +129,9 @@ int main(int argc ,char *argv[])
 		if(0 == task_mm_json_get(&pjson))
 		{
 			printf("\n%s\n",pjson);
-			FREE(pjson);
-			/////////////////////////////
 			multicast_send(m, (unsigned char *)pjson, strlen(pjson));
+			/////////////////////////////
+			FREE(pjson);
 		}
 		/////////////////////////////
 		sleep(1);
