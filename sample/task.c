@@ -161,9 +161,9 @@ int main(void)
 	p3 = MALLOC(30);
 	assert(p1);
 	
-	//task_create("no1",0,0, task_routine_no1, (void *)NULL);
-	//task_create("no2",0,0, task_routine_no2, (void *)NULL);
-	//task_create("normal",0,0, task_routine_normal, (void *)NULL);
+	task_create("no1",0,0, task_routine_no1, (void *)NULL);
+	task_create("no2",0,0, task_routine_no2, (void *)NULL);
+	task_create("normal",0,0, task_routine_normal, (void *)NULL);
 	task_create(TASK_PRODUCER,0,0, task_routine_producer, (void *)NULL);
 	task_create(TASK_CONSUMER1,0,0, task_routine_consumer1, (void *)NULL);
 	task_create(TASK_CONSUMER2,0,0, task_routine_consumer2, (void *)NULL);
