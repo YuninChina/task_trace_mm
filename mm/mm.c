@@ -104,19 +104,19 @@ void mm_show(void)
 }
 
 
-void *mm_list_get(void)
+void mm_show2(void (*show)(const char *))
 {
-	return (void *)&mm_list;
-}
-
-unsigned int mm_list_size(void)
-{
-	unsigned int cnt = 0;
 	task_mm_node_t *node = NULL,*tmp = NULL;
+	char buf[1024] = {0,};
+	printf("\n\n=========================================== mm_show ===========================================\n");
+	printf("%-15s %-15s %-15s %-32s %-15s %-15s %-15s\n",
+	"[task]","[tid]","[pid]","[function]","[line]","[addr]","[size]");
 	list_for_each_entry_safe(node, tmp,&mm_list, list) {
-		cnt++;
+		memset(buf,0,sizeof(buf));
+		snprintf(buf,sizeof(buf),"%-15s %-15lu %-15lu %-32s %-15lu %-15p %-15lu\n",
+		node->task_name,node->tid,node->pid,node->func,node->line,node->addr,node->size);	
+		printf("%s",buf);
+		if(show) show((const char *)buf);
 	}
-	return cnt;
 }
-
 
