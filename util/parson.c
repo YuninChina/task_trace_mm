@@ -37,6 +37,7 @@
 #include <math.h>
 #include <errno.h>
 
+
 /* Apparently sscanf is not implemented in some "standard" libraries, so don't use it, if you
  * don't have to. */
 #define sscanf THINK_TWICE_ABOUT_USING_SSCANF
@@ -61,8 +62,15 @@
 #define IS_NUMBER_INVALID(x) (((x) * 0.0) != 0.0)
 #endif
 
+#if 0
 static JSON_Malloc_Function parson_malloc = malloc;
 static JSON_Free_Function parson_free = free;
+#else
+#include "mm.h"
+
+#define parson_malloc MALLOC
+#define parson_free FREE
+#endif
 
 static int parson_escape_slashes = 1;
 
@@ -2164,8 +2172,8 @@ int json_boolean(const JSON_Value *value) {
 }
 
 void json_set_allocation_functions(JSON_Malloc_Function malloc_fun, JSON_Free_Function free_fun) {
-    parson_malloc = malloc_fun;
-    parson_free = free_fun;
+    //parson_malloc = malloc_fun;
+    //parson_free = free_fun;
 }
 
 void json_set_escape_slashes(int escape_slashes) {
