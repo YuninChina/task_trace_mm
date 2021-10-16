@@ -11,6 +11,7 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "parson.h"
 
 #include "task.h"
 #include "klist.h"
@@ -278,6 +279,81 @@ void task_mm_show(void)
 	} while(1);
 	
 }
+
+int task_mm_json_get(char **ppjson)
+{
+	char *pjson = NULL;
+	RETURN_VAL_IF_FAIL(ppjson,-1);
+	
+	task_t *node = NULL,*tmp = NULL;
+
+	char cmd[1024] = {0,};
+	FILE *fp = NULL;
+    char buf[1024] = {0,};
+    char *pResult = NULL;
+    unsigned long task_pid = 0,task_tid = 0;
+	unsigned long mem_size = 0;
+	const char *task_name = NULL;
+	pid_t pid = getpid();
+	memset(cmd,0,sizeof(cmd));
+    snprintf(cmd,sizeof(cmd),"ls /proc/%d/task/ | xargs",pid);
+    fp = popen (cmd, "r");
+    assert(fp);
+	memset(buf,0,sizeof(buf));
+	pResult = fgets (buf, sizeof (buf), fp);
+    assert(pResult);
+    fclose(fp);
+    fp = NULL;
+    //////////////////////
+    
+    char *sub = NULL,*str = NULL;
+	str = buf;
+	JSON_Value *jValRoot = json_value_init_array();
+	assert(jValRoot);
+	JSON_Array *jArrRoot = json_array(jValRoot);
+	assert(jArrRoot);
+	do {
+		sub = strtok(str," ");
+		if(NULL == sub)
+			break;
+		sscanf(str,"%lu",&task_pid);
+		//printf("pid=%d, task_pid: %d\n",pid,task_pid);
+		str += (strlen(sub)+1);
+
+		///////////////////////////////
+		mem_size = 0;
+		task_name = NULL;
+		list_for_each_entry_safe(node, tmp,&task_list, list) {
+			if(task_pid == node->info.pid)
+			{
+				task_name = node->info.name;
+				task_tid = node->info.tid;
+				///////////////////////////////
+				task_mm_node_t *mnode = NULL,*tmnode = NULL;
+				list_for_each_entry_safe(mnode, tmnode,&node->head, list) {
+					mem_size += mnode->size;
+				}
+			}
+		}
+		/////////////////////////////
+		JSON_Value *jVal = NULL;
+		JSON_Object *jObj = NULL;
+		jVal = json_value_init_object();
+		assert(jVal);
+		jObj = json_value_get_object(jVal);
+		assert(jObj);
+		json_object_dotset_string(jObj, "task", task_name);
+		json_object_dotset_number(jObj, "task_pid", task_pid);
+		json_object_dotset_number(jObj, "task_tid", task_tid);
+		json_object_dotset_number(jObj, "size", mem_size);
+		json_array_append_value(jArrRoot,jVal);
+	} while(1);
+	pjson = json_serialize_to_string(jValRoot);
+	///////////////////////////////////////////
+	*ppjson = pjson;
+	return 0;
+}
+
 
 
 static task_t _task;
