@@ -333,6 +333,7 @@ int task_mm_json_get(char **ppjson)
 		json_array_append_value(jArrRoot,jVal);
 	} while(1);
 	pjson = json_serialize_to_string(jValRoot);
+	json_value_free(jValRoot);
 	///////////////////////////////////////////
 	*ppjson = pjson;
 	return 0;

@@ -89,6 +89,7 @@ int main(void)
 		if(0 == task_mm_json_get(&pjson))
 		{
 			printf("JSON:\n%s\n",pjson);
+			FREE(pjson);
 		}
 		
 		sleep(1);
