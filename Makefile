@@ -140,7 +140,7 @@ MAKEFILE_BUILD := scripts/Makefile.build
 MAKEFILE_TEST_BUILD := scripts/Makefile.test.build
 export MAKEFILE_BUILD MAKEFILE_TEST_BUILD
 
-dirs := base/ mm/ task/ util/
+dirs := base/ core/ util/
 dirs := ${patsubst %/,%,$(filter %/, $(dirs))}
 PHONY += $(dirs)
 $(dirs): FORCE
