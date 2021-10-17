@@ -64,11 +64,13 @@ static void task_exit(task_t *task)
 			}
 		}
 		pthread_mutex_unlock(&task_mutex);
-		
+		printf("%-15s %-15s %-15s %-32s %-15s %-15s %-15s\n",
+		"[task]","[tid]","[pid]","[function]","[line]","[addr]","[size]");
 		list_for_each_entry_safe(mnode, tmnode,&task->head, list) {
+			printf("%-15s %-15lu %-15lu %-32s %-15lu %-15p %-15lu\n",mnode->task_name,
+			mnode->tid,mnode->pid,mnode->func,mnode->line,mnode->addr,mnode->size);
 			list_del(&mnode->list);
 			free(mnode);
-			break;
 		}
 		pthread_mutex_destroy(&task->mutex);
 		free(task);
